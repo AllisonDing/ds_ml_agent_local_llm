@@ -3,8 +3,6 @@
 This example demonstrates how to build a <b>natural language-driven data science and machine learning agent</b> powered by <b>NVIDIA GPUs</b>.
 The agent allows users to perform data exploration, model training, and hyperparameter optimization interactively using <b>RAPIDS cuDF</b> and <b>cuML</b> for GPU acceleration. 
 
----
-
 ## Overview
 
 The Data Science ML Agent enables natural language interaction for common data science workflows, including dataset loading, target selection, model training, and performance optimization.
@@ -66,7 +64,6 @@ make inference for the test dataset
 
 This project provides sample datasets, the Kaggle [Titanic-Dataset](https://www.kaggle.com/competitions/titanic), [Titanic-Dateset-test](https://www.kaggle.com/competitions/titanic), and **Titanic-Dataset-1M**, an extrapolated version scaled to 1M rows of Titanic-Dataset. They are available in `data/` directory. 
 
----
 
 **Note:**  
 - Ensure you have the appropriate dependencies installed for each mode.  
