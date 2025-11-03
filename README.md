@@ -3,7 +3,7 @@
 A data science and machine learning agent powered by NVIDIA GPUs. You can interact with it using natural language to perform data exploration, model training, and hyperparameter optimization with minimal setup. Under the hood, it uses NVIDIA cuDF and cuML — GPU-accelerated libraries for DataFrame operations and machine learning — to significantly accelerate data processing and model experimentation.  
 
 ---
-## Large Language Model Used
+## LLM Used
 
 [NVIDIA Nemotron Nano-9B-v2](https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2), a compact and powerful open-source language model.
 
