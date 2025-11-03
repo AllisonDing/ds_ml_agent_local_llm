@@ -1,59 +1,66 @@
 # Data Science ML Agent
 
-A data science and machine learning agent powered by NVIDIA GPUs. You can interact with it using natural language to perform data exploration, model training, and hyperparameter optimization with minimal setup. Under the hood, it uses NVIDIA cuDF and cuML — GPU-accelerated libraries for DataFrame operations and machine learning — to significantly accelerate data processing and model experimentation.  
+This example demonstrates how to build a <b>natural language-driven data science and machine learning agent</b> powered by <b>NVIDIA GPUs</b>.
+The agent allows users to perform data exploration, model training, and hyperparameter optimization interactively using <b>RAPIDS cuDF</b> and <b>cuML</b> for GPU acceleration. 
 
 ---
+
+## Overview
+
+The Data Science ML Agent enables natural language interaction for common data science workflows, including dataset loading, target selection, model training, and performance optimization.
+It combines the flexibility of LLMs with GPU-accelerated computation to simplify and speed up end-to-end machine learning pipelines.
+
 ## LLM Used
 
-[NVIDIA Nemotron Nano-9B-v2](https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2), a compact and powerful open-source language model.
+[NVIDIA Nemotron Nano-9B-v2](https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2): A compact, open-source large language model optimized for reasoning and data analysis tasks.
 
-## Package Installation
+## Key Features
 
-This project requires the following versions to ensure full compatibility:
-- RAPIDS: 25.10
+- Natural language interface for running data exploration and ML workflows
+- GPU acceleration with cuDF (DataFrame operations) and cuML (ML algorithms)
+- Support for CPU mode using pandas and scikit-learn
+- Simple setup and execution through Streamlit interface
+- Compatible with both small and large-scale datasets
 
-Please refer to the [official RAPIDS installation documentation](https://github.com/AllisonDing/cuxfilter_viz_agent#:~:text=RAPIDS%20installation%20documentation) for detailed instructions.
+## Requirements
 
-### Installation Example:
+- RAPIDS 25.10
+- Python 3.10, 3.11, 3.12, or 3.13
+- CUDA 12.0 or 13.0 compatible NVIDIA GPU (for GPU mode)
 
+Please refer to the [official RAPIDS installation documentation](https://docs.rapids.ai/install/) for detailed instructions.
+
+Installation Example:
 ```bash
 conda create -n rapids-25.10 -c rapidsai -c conda-forge -c nvidia  \
     rapids=25.10 python=3.11 'cuda-version=13.0'
 ```
 
-## Running the Agent
+## Example Usage
 
 ```bash
 conda activate rapids-25.10
+
 export NVIDIA_API_KEY=""
-```
 
-Then you can run the agent in two different modes:
+# GPU-accelerated mode
+python -m cudf.pandas -m cuml.accel -m streamlit run user_interface.py
 
-### 1. **GPU-Accelerated Mode** (NVIDIA cuML + cuDF)
-Leverages NVIDIA's RAPIDS libraries for faster data processing and model training.
-
-```bash 
-python -m cudf.padnas -m cuml.accel -m streamlit run user_interface.py
-```
-
-### 2. **CPU Mode** (scikit-learn + pandas)
-Uses standard pandas and scikit-learn for data processing and modeling.
-
-```bash
+# CPU-based mode
 streamlit run user_interface.py
 ```
 
-### The agent supports queries such as:<br>
-load dataset Titanic-Dataset.csv/Titanic-Dataset-test.csv<br>
-set target variable to be 'Survived'<br>
-train classification/regression model<br>
-optimize svc with 50 trials<br>
-optimize forest regressor with 30 trials<br>
-show best model by r2<br>
-make inference for the test dataset<br>
+Example queries:
+```bash
+load dataset Titanic-Dataset.csv/Titanic-Dataset-test.csv
+set target variable to be 'Survived'
+train classification/regression model
+optimize svc with 50 trials
+optimize forest regressor with 30 trials
+show best model by r2
+make inference for the test dataset
 ...
-
+```
 
 ## 📊 Sample Dataset
 
