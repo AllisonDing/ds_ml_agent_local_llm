@@ -1,6 +1,6 @@
-# Conversational ML Agent
+# Data Science ML Agent
 
-A conversational data science and machine learning agent powered by NVIDIA GPUs.  
+A data science and machine learning agent powered by NVIDIA GPUs.  
 You can interact with it using natural language to run data exploration and machine learning tasks with minimal setup.
 
 ---
