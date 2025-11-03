@@ -1,12 +1,11 @@
 # Data Science ML Agent
 
-A data science and machine learning agent powered by NVIDIA GPUs.  
-You can interact with it using natural language to run data exploration and machine learning tasks with minimal setup.
+A data science and machine learning agent powered by NVIDIA GPUs. You can interact with it using natural language to perform data exploration, model training, and hyperparameter optimization with minimal setup. Under the hood, it uses NVIDIA cuDF and cuML — GPU-accelerated libraries for DataFrame operations and machine learning — to significantly accelerate data processing and model experimentation.  
 
 ---
-## Model Used
+## Large Language Model Used
 
-[NVIDIA Nemotron Nano-9B-v2](https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2)
+[NVIDIA Nemotron Nano-9B-v2](https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2), a compact and powerful open-source language model.
 
 ## Package Installation
 
@@ -46,15 +45,15 @@ streamlit run user_interface.py
 ```
 
 ### The agent supports queries such as:<br>
-   load data<br>
-   preview the head<br>
-   describe the data<br>
-   train the classification or regression model<br>
-   hyperparameter optimization (HPO) for (n) trials<br>
-   best model<br>
-   show model history<br>
-   make inference on the test dataset
-   ...
+load dataset Titanic-Dataset.csv/Titanic-Dataset-test.csv<br>
+set target variable to be 'Survived'<br>
+train classification/regression model<br>
+optimize svc with 50 trials<br>
+optimize forest regressor with 30 trials<br>
+show best model by r2<br>
+make inference for the test dataset<br>
+...
+
 
 ## 📊 Sample Dataset
 
