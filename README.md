@@ -25,6 +25,8 @@ It combines the flexibility of LLMs with GPU-accelerated computation to simplify
 - RAPIDS 25.10
 - Python 3.10, 3.11, 3.12, or 3.13
 - CUDA 12.0 or 13.0 compatible NVIDIA GPU (for GPU mode)
+- NVIDIA API key ([get one here](https://build.nvidia.com/))
+- streamlit, optuna, joblib
 
 Please refer to the [official RAPIDS installation documentation](https://docs.rapids.ai/install/) for detailed instructions.
 
