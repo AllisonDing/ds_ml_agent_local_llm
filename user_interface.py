@@ -142,30 +142,72 @@ with left_col:
     # Quick examples
     with st.expander("💡 Example Commands", expanded=False):
         st.markdown("""
-        **Load training data:**
+        **Data Loading:**
         ```
-        load dataset train.csv target=survived
+        load_dataset(path, target)
+        - Load CSV/Parquet file (target optional)
+        set_target(column)
+        - Set target column
+        describe_data()
+        - Show dataset information
+        preview_data(rows?)
+        - Show first few rows
         ```
-        
-        **Train models:**
+
+        **Model Training:**
         ```
-        train classification
-        optimize random forest with 50 trials
+        train_classification()
+        - Train classification models
+        train_regression()
+        - Train regression models
         ```
-        
-        **Make predictions:**
+
+        **Classification Optimization:**
         ```
-        predict test_data.csv
-        predict test_data.csv output_path=my_predictions.csv
+        optimize_logistic(trials?)
+        - Optimize logistic regression
+        optimize_svc(trials?)
+        - Optimize support vector classifier
+        optimize_forest(trials?)
+        - Optimize random forest classifier
         ```
-        
-        **View results:**
+
+        **Regression Optimization:**
         ```
-        show best model by accuracy
-        show history
+        optimize_ridge(trials?)
+        - Optimize ridge regression
+        optimize_forest_regressor(trials?)
+        - Optimize random forest regressor
+        optimize_svr(trials?)
+        - Optimize support vector regressor
+        ```
+
+        **Predictions:**
+        ```
+        predict(test_data_path, output_path?)
+        - Make predictions on test data
+        ```
+
+        **Results:**
+        ```
+        show_best_model(metric?)
+        - Show best model
+        show_history(limit?)
+        - Show recent experiments
+        ```
+
+        **Examples:**
+        ```
+        "load dataset Titanic-Dataset.csv/Titanic-Dataset-test.csv"
+        "set target variable to be 'Survived'"
+        "train classification/regression model"
+        "optimize svc with 50 trials"
+        "optimize forest regressor with 30 trials"
+        "show best model by r2"
+        "make inference for the test dataset"
         ```
         """)
-
+                    
 with right_col:
     st.header("💬 Chat")
     
@@ -357,6 +399,7 @@ with st.sidebar:
     
     # Trained Model Section
     model_path = os.path.join(temp_dir, "best_model.joblib")
+
     if os.path.exists(model_path):
         model_size = os.path.getsize(model_path) / (1024 * 1024)
         model_time = time.strftime('%Y-%m-%d %H:%M:%S', 
@@ -383,6 +426,7 @@ with st.sidebar:
     
     # Predictions Section
     predictions_path = os.path.join(temp_dir, "predictions.csv")
+    
     if os.path.exists(predictions_path):
         try:
             pred_df = pd.read_csv(predictions_path)
@@ -449,5 +493,11 @@ def cleanup_temp_files():
                 print(f"Cleaned up: {file_path}")
             except Exception as e:
                 print(f"Could not delete {file_path}: {e}")
+    
+    try:
+        st.cache_data.clear()
+        st.cache_resource.clear()
+    except:
+        pass
 
 atexit.register(cleanup_temp_files)

@@ -19,6 +19,7 @@ import optuna
 
 import warnings
 warnings.filterwarnings("ignore", message="X has feature names", category=UserWarning)
+warnings.filterwarnings('ignore', message='This Pipeline instance is not fitted yet', category=FutureWarning)
 
 def _try_free_memory():
     """Active GPU Memory Management"""
@@ -29,10 +30,6 @@ def _try_free_memory():
         cupy.get_default_pinned_memory_pool().free_all_blocks()
     except Exception:
         pass
-
-def to_float32(X):
-    """Float32 Converstion to Save Memory"""
-    return X.astype(np.float32)
 
 def load_data(data_path: str, target: str = None) -> Tuple[pd.DataFrame, str]:
     """Load CSV or Parquet file."""
@@ -69,7 +66,7 @@ def build_preprocessing_pipeline(df, target: str):
     numeric_pipeline = Pipeline([
         ('imputer', SimpleImputer(strategy='median')),
         ('scaler', StandardScaler()),
-        ('float32', FunctionTransformer(to_float32, accept_sparse=False)),
+        ('float32', Float32Transformer(accept_sparse=False)),
     ])
 
     categorical_pipeline = Pipeline([
@@ -247,8 +244,8 @@ def optimize_random_forest(X_train, y_train, preprocessor, n_trials=20):
 
     def objective(trial):
         # Choose parameters to test
-        n_estimators = trial.suggest_int('n_estimators', 50, 200)
-        max_depth = trial.suggest_int('max_depth', 3, 20)
+        n_estimators = trial.suggest_int('n_estimators', 50, 100)
+        max_depth = trial.suggest_int('max_depth', 5, 12)
         
         model = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, random_state=42)
         pipeline = Pipeline([
@@ -262,7 +259,9 @@ def optimize_random_forest(X_train, y_train, preprocessor, n_trials=20):
         return scores.mean()
     
     # Run optimization
-    study = optuna.create_study(direction='maximize')
+    study = optuna.create_study(direction='maximize',
+                                sampler=optuna.samplers.TPESampler(n_startup_trials=10), 
+                                pruner=optuna.pruners.MedianPruner(n_startup_trials=5))
     study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
     
     # Build best model
@@ -381,7 +380,7 @@ def optimize_ridge_regression(X_train, y_train, preprocessor, n_trials=20):
 
     def objective(trial):
         # Choose parameters to test
-        alpha = trial.suggest_float('alpha', 0.01, 100, log=True)
+        alpha = trial.suggest_float('alpha', 10, 10000, log=True)
         
         model = Ridge(alpha=alpha, random_state=42)
         pipeline = Pipeline([
@@ -425,9 +424,9 @@ def optimize_random_forest_regressor(X_train, y_train, preprocessor, n_trials=20
 
     def objective(trial):
         # Choose parameters to test
-        n_estimators = trial.suggest_int('n_estimators', 10, 50)
-        max_depth = trial.suggest_int('max_depth', 3, 10)
-        min_samples_leaf = trial.suggest_int('min_samples_leaf', 1, 3)
+        n_estimators = trial.suggest_int('n_estimators', 10, 30)
+        max_depth = trial.suggest_int('max_depth', 3, 8)
+        min_samples_leaf = trial.suggest_int('min_samples_leaf', 2, 5)
         
         model = RandomForestRegressor(
             n_estimators=n_estimators,
@@ -446,7 +445,9 @@ def optimize_random_forest_regressor(X_train, y_train, preprocessor, n_trials=20
         return scores.mean()
     
     # Run optimization
-    study = optuna.create_study(direction='maximize')
+    study = optuna.create_study(direction='maximize', 
+                                sampler=optuna.samplers.TPESampler(n_startup_trials=10), 
+                                pruner=optuna.pruners.MedianPruner())
     study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
     
     # Build best model
@@ -594,3 +595,21 @@ def predict(model_path: str, test_data_path: str, output_path: str = "prediction
         summary['task_type'] = 'regression'
     
     return summary
+
+class Float32Transformer:
+    """Picklable transformer to convert arrays to float32 for memory efficiency."""
+    
+    def __init__(self, accept_sparse=False):
+        self.accept_sparse = accept_sparse
+    
+    def fit(self, X, y=None):
+        return self
+    
+    def transform(self, X):
+        # Convert sparse to dense if needed
+        if hasattr(X, 'toarray') and not self.accept_sparse:
+            X = X.toarray()
+        return X.astype('float32')
+    
+    def __reduce__(self):
+        return (Float32Transformer, (self.accept_sparse,))

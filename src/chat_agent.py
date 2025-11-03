@@ -801,11 +801,13 @@ class ChatAgent:
         • show_history(limit?) - Show recent experiments
 
         Examples:
-        "load dataset data/titanic.csv target=Survived"
-        "train classification"
+        "load dataset Titanic-Dataset.csv/Titanic-Dataset-test.csv"
+        "set target variable to be 'Survived'"
+        "train classification/regression model"
         "optimize svc with 50 trials"
         "optimize forest regressor with 30 trials"
         "show best model by r2"
+        "make inference for the test dataset"
         """
     
     def _generate_custom_analysis(self, user_request: str) -> str:
