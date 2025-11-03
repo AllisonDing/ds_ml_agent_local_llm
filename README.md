@@ -64,7 +64,7 @@ make inference for the test dataset
 
 ## 📊 Sample Dataset
 
-This project provides sample datasets, the Kaggle [Titanic-Dataset](https://www.kaggle.com/competitions/titanic), [Titanic-Dateset-test](https://www.kaggle.com/competitions/titanic), and **Titanic-Dataset-1M**, an extrapolated version scaled to 1M rows of Titanic-Dataset. They are available in `data/` directory. 
+This project provides sample datasets, the Kaggle Titanic Datasets [train.csv](https://www.kaggle.com/competitions/titanic) and [test.csv](https://www.kaggle.com/competitions/titanic) into the data folder. You can also create **train-1M**, an extrapolated version scaled to 1M rows of the train.csv using the script extrapolation.py, and try out the GPU accelerated cuDF and cuML. 
 
 
 **Note:**  
