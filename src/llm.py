@@ -102,7 +102,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 # --------------------------------------------------------------------------
 # CONFIGURATION
 # --------------------------------------------------------------------------
-LOCAL_MODEL_PATH = "/home/allisond/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-Nano-9B-v2/snapshots/7d4e437f6cd878d51f70d715e99d9e1bcc93a462"
+# LOCAL_MODEL_PATH = "/home/allisond/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-Nano-9B-v2/snapshots/7d4e437f6cd878d51f70d715e99d9e1bcc93a462"
+LOCAL_MODEL_PATH = "/home/allisond/.cache/huggingface/hub/models--nvidia--Llama-3_3-Nemotron-Super-49B-v1_5/snapshots/420ba7d28211abf116b8b103ab700d92619daf98"
 
 class LLMClient:
     """
