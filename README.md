@@ -12,6 +12,8 @@ It combines the flexibility of LLMs with GPU-accelerated computation to simplify
 
 [NVIDIA Nemotron Nano-9B-v2](https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2): A compact, open-source large language model optimized for reasoning and data analysis tasks.
 
+Donwload it to your local folder using the llm_down.py script. The model will be permanently saved in /home/your_username/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-Nano-9B-v2
+
 ## Key Features
 
 - Natural language interface for running data exploration and ML workflows
@@ -53,6 +55,7 @@ streamlit run user_interface.py
 Example queries:
 ```bash
 load dataset Titanic-Dataset.csv/Titanic-Dataset-test.csv
+describe the dataset
 set target variable to be 'Survived'
 train classification/regression model
 optimize svc with 50 trials
