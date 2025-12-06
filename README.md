@@ -11,7 +11,7 @@ The Data Science ML Agent enables natural language interaction for common data s
 
 [NVIDIA Nemotron Nano-9B-v2](https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2): A compact, open-source large language model optimized for reasoning and data analysis tasks.
 
-Donwload it to your local folder using the llm_download.py script. The model will be permanently saved in .cache, for example, /home/your_username/.cache/huggingface/hub/models--nvidia--Llama-3_3-Nemotron-Super-49B-v1_5/snapshots/420ba7d28211abf116b8b103ab700d92619daf98
+Donwload it to your local folder using the llm_download.py script. The model will be permanently saved in .cache, for example, /home/your_username/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-Nano-9B-v2/snapshots/bce37e25324449f9be5b6a03c69a15244d27ee6e
 
 ## Inference Server Used
 
@@ -30,7 +30,7 @@ vLLM (Versatile Large Language Model) is a high-performance, open-source library
 
 - RAPIDS 25.10
 - Python 3.10, 3.11, 3.12, or 3.13
-- vLLM >= 0.6.4.post1
+- vLLM 0.9.x and later
 - CUDA 12.0 or 13.0 compatible NVIDIA GPU (for GPU mode)
 - streamlit, optuna, joblib, transformers, accelerate
 
