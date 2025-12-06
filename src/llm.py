@@ -1,58 +1,105 @@
+# src/llm.py
 import os
-from openai import OpenAI
-from typing import List, Optional
+import re
+import requests
+import json
+from typing import List, Optional, Dict, Any
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
-# vLLM server endpoint
-VLLM_API_BASE = "http://localhost:8000/v1"
-# MODEL_NAME = "/home/allisond/.cache/huggingface/hub/models--nvidia--Llama-3_3-Nemotron-Super-49B-v1_5/snapshots/420ba7d28211abf116b8b103ab700d92619daf98"  # Super-49B
-MODEL_NAME = "/home/allisond/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-Nano-9B-v2/snapshots/bce37e25324449f9be5b6a03c69a15244d27ee6e" # Nano-9B
+# Configuration
+VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", "http://localhost:8000/v1")
 
+def create_session():
+    """Create a session with robust retry logic."""
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=0.5,
+        status_forcelist=[429, 500, 502, 503, 504],
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
 
 class LLMClient:
-    """Client that connects to vLLM server"""
-    
     def __init__(self):
-        print(f"Connecting to vLLM server at: {VLLM_API_BASE}")
-        self.client = OpenAI(
-            api_key="EMPTY",
-            base_url=VLLM_API_BASE
-        )
-        print("vLLM client initialized!")
-    
-    def chat(self, messages: List[dict], **kwargs) -> dict:
-        """Generate response from vLLM"""
+        self.base_url = VLLM_BASE_URL.rstrip("/")
+        self.session = create_session()
+        self.temperature = 0.0
+        self.max_tokens = 4096
+        self.model = self._auto_detect_model()
+
+    def _auto_detect_model(self) -> str:
         try:
-            response = self.client.chat.completions.create(
-                model=MODEL_NAME,
-                messages=messages,
-                max_tokens=kwargs.get('max_tokens', 1024),
-                temperature=kwargs.get('temperature', 0.3),
-                top_p=kwargs.get('top_p', 0.95),
+            print(f"🔌 Connecting to vLLM at {self.base_url}...")
+            response = self.session.get(f"{self.base_url}/models", timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                if "data" in data and len(data["data"]) > 0:
+                    model_id = data["data"][0]["id"]
+                    print(f"✅ Found active model: {model_id}")
+                    return model_id
+            return "nemotron-9b"
+        except Exception as e:
+            print(f"❌ Connection Failed: {e}")
+            return "unknown-model"
+
+    def _clean_content(self, content: str) -> str:
+        """Removes <think> tags and other artifacts from the model response."""
+        if not content:
+            return ""
+        
+        # Remove the internal monologue block <think>...</think>
+        content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL)
+        
+        # Cleanup extra whitespace resulting from the removal
+        return content.strip()
+
+    def chat(self, messages: List[dict], tools: Optional[List[dict]] = None) -> dict:
+        if not self.model:
+            raise Exception("No model connected.")
+
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
+
+        if tools:
+            payload["tools"] = tools
+            payload["tool_choice"] = "auto"
+
+        try:
+            response = self.session.post(
+                f"{self.base_url}/chat/completions",
+                json=payload,
+                timeout=120
             )
             
-            return {
-                "choices": [{
-                    "message": {
-                        "role": "assistant",
-                        "content": response.choices[0].message.content
-                    },
-                    "finish_reason": response.choices[0].finish_reason
-                }],
-                "usage": response.usage.model_dump() if hasattr(response, 'usage') else {}
-            }
+            if response.status_code == 400 and "tool" in response.text.lower():
+                 raise Exception(f"Tool Error: Ensure vLLM started with '--tool-call-parser llama3_json'. Response: {response.text}")
+
+            response.raise_for_status()
+            result = response.json()
+
+            # --- CLEANING STEP (CRITICAL) ---
+            if "choices" in result and len(result["choices"]) > 0:
+                message = result["choices"][0]["message"]
+                
+                # 1. Clean the text content (remove <think> tags)
+                if message.get("content"):
+                    message["content"] = self._clean_content(message["content"])
+                
+                # 2. Ensure tool calls are respected
+                # (Native parser handles extraction, but we leave it as is)
             
+            return result
+
         except Exception as e:
-            print(f"[ERROR] vLLM API call failed: {e}")
-            return {
-                "choices": [{
-                    "message": {
-                        "role": "assistant",
-                        "content": f"Error: {str(e)}"
-                    },
-                    "finish_reason": "error"
-                }]
-            }
+            raise Exception(f"LLM Error: {str(e)}")
 
-
-def create_client() -> LLMClient:
+def create_client():
     return LLMClient()

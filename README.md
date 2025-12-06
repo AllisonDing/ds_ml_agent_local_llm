@@ -14,7 +14,7 @@ It combines the flexibility of LLMs with GPU-accelerated computation to simplify
 
 Donwload it to your local folder using the llm_down.py script. The model will be permanently saved in /home/your_username/.cache/huggingface/hub/models--nvidia--Llama-3_3-Nemotron-Super-49B-v1_5/snapshots/420ba7d28211abf116b8b103ab700d92619daf98
 
-## Inference Used
+## Inference Server Used
 
 vLLM 
 
@@ -41,20 +41,20 @@ Please refer to the [official RAPIDS installation documentation](https://docs.ra
 
 For stability on Blackwell systems, it is **highly recommended** to use two separate environments: one for the Inference Server (vLLM) and one for the Agent (RAPIDS).
 
-### 1. Create the Server Environment (vLLM)
-This environment runs the Streamlit UI and RAPIDS libraries.
-
-```bash
-conda create -n rapids-25.10 -c rapidsai -c conda-forge -c nvidia  \
-    rapids=25.10 python=3.11 'cuda-version=13.0'
-```
-
-### 2. Create the Agent Environment
+### 1. Create the Agent Environment
 This environment hosts the LLM. It must be kept clean to avoid compiler conflicts with RAPIDS.
 
 ```bash
 conda create -n vllm-server
 pip install vllm --extra-index-url https://download.pytorch.org/whl/cu130
+```
+
+### 2. Create the Server Environment (vLLM)
+This environment runs the Streamlit UI and RAPIDS libraries.
+
+```bash
+conda create -n rapids-25.10 -c rapidsai -c conda-forge -c nvidia  \
+    rapids=25.10 python=3.11 'cuda-version=13.0'
 ```
 
 ## Example Usage
@@ -71,12 +71,15 @@ export PATH=/usr/local/cuda/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
 
 vllm serve /home/your_username/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-Nano-9B-v2/snapshots/bce37e25324449f9be5b6a03c69a15244d27ee6e \
+    --served-model-name nemotron-9b \
     --dtype bfloat16 \
     --max-model-len 8192 \
     --gpu-memory-utilization 0.6 \
     --max-num-seqs 32 \
     --port 8000 \
-    --trust-remote-code
+    --trust-remote-code \
+    --enable-auto-tool-choice \
+    --tool-call-parser llama3_json
 ```
 
 Step 2: Start the User Interface (Terminal 2)
