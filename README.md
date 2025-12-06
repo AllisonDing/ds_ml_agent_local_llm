@@ -5,18 +5,17 @@ The agent allows users to perform data exploration, model training, and hyperpar
 
 ## Overview
 
-The Data Science ML Agent enables natural language interaction for common data science workflows, including dataset loading, target selection, model training, and performance optimization.
-It combines the flexibility of LLMs with GPU-accelerated computation to simplify and speed up end-to-end machine learning pipelines.
+The Data Science ML Agent enables natural language interaction for common data science workflows, including dataset loading, target selection, model training, and performance optimization. It combines the flexibility of LLMs with GPU-accelerated computation to simplify and speed up end-to-end machine learning pipelines.
 
 ## LLM Used
 
 [NVIDIA Nemotron Nano-9B-v2](https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2): A compact, open-source large language model optimized for reasoning and data analysis tasks.
 
-Donwload it to your local folder using the llm_down.py script. The model will be permanently saved in /home/your_username/.cache/huggingface/hub/models--nvidia--Llama-3_3-Nemotron-Super-49B-v1_5/snapshots/420ba7d28211abf116b8b103ab700d92619daf98
+Donwload it to your local folder using the llm_download.py script. The model will be permanently saved in .cache, for example, /home/your_username/.cache/huggingface/hub/models--nvidia--Llama-3_3-Nemotron-Super-49B-v1_5/snapshots/420ba7d28211abf116b8b103ab700d92619daf98
 
 ## Inference Server Used
 
-vLLM 
+vLLM (Versatile Large Language Model) is a high-performance, open-source library designed for the fast inference and serving of Large Language Models (LLMs).
 
 ## Key Features
 
@@ -59,7 +58,7 @@ conda create -n rapids-25.10 -c rapidsai -c conda-forge -c nvidia  \
 
 ## Example Usage
 
-Step 1: Start the vLLM Server (Terminal 1)
+### Step 1: Start the vLLM Server (Terminal 1)
 Open a terminal, activate the server environment, and launch the model.
 
 ```bash
@@ -82,7 +81,7 @@ vllm serve /home/your_username/.cache/huggingface/hub/models--nvidia--NVIDIA-Nem
     --tool-call-parser llama3_json
 ```
 
-Step 2: Start the User Interface (Terminal 2)
+### Step 2: Start the User Interface (Terminal 2)
 Open a second terminal.
 
 ```bash
@@ -99,6 +98,7 @@ streamlit run user_interface.py
 ```bash
 load dataset Titanic-Dataset.csv/Titanic-Dataset-test.csv
 describe the dataset
+preview the first n rows
 set target variable to be 'Survived'
 train classification/regression model
 optimize svc with 50 trials
