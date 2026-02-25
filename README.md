@@ -44,7 +44,7 @@ For stability on Blackwell systems, it is **highly recommended** to use two sepa
 This environment hosts the LLM. It must be kept clean to avoid compiler conflicts with RAPIDS.
 
 ```bash
-conda create -n vllm-server
+conda create -n vllm_server
 pip install vllm --extra-index-url https://download.pytorch.org/whl/cu130
 ```
 
@@ -62,12 +62,12 @@ conda create -n rapids-25.10 -c rapidsai -c conda-forge -c nvidia  \
 Open a terminal, activate the server environment, and launch the model.
 
 ```bash
-conda activate vllm-server
+conda activate vllm_server
 
 export TRITON_PTXAS_PATH=/usr/local/cuda/bin/ptxas
 export TORCH_CUDA_ARCH_LIST="12.1a"
 export PATH=/usr/local/cuda/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/home/allisond/miniconda3/envs/vllm_server/lib:$LD_LIBRARY_PATH
 
 vllm serve /home/your_username/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-Nano-9B-v2/snapshots/bce37e25324449f9be5b6a03c69a15244d27ee6e \
     --served-model-name nemotron-9b \
