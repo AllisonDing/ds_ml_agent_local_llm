@@ -67,7 +67,7 @@ conda activate vllm_server
 export TRITON_PTXAS_PATH=/usr/local/cuda/bin/ptxas
 export TORCH_CUDA_ARCH_LIST="12.1a"
 export PATH=/usr/local/cuda/bin:$PATH
-export LD_LIBRARY_PATH=/home/allisond/miniconda3/envs/vllm_server/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/home/your_username/miniconda3/envs/vllm_server/lib:$LD_LIBRARY_PATH
 
 vllm serve /home/your_username/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-Nano-9B-v2/snapshots/bce37e25324449f9be5b6a03c69a15244d27ee6e \
     --served-model-name nemotron-9b \
