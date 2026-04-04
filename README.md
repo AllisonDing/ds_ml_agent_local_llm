@@ -48,7 +48,7 @@ conda activate rapids-vllm
 
 pip install vllm --extra-index-url https://download.pytorch.org/whl/cu130
 
-pip install streamlit optuna
+pip install streamlit optuna joblib transformers accelerate
 ```
 
 ## Example Usage
