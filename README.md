@@ -36,33 +36,28 @@ vLLM (Versatile Large Language Model) is a high-performance, open-source library
 
 Please refer to the [official RAPIDS installation documentation](https://docs.rapids.ai/install/) for detailed instructions.
 
-## Recommendated Installation (Example):
+## Recommendated Installation:
 
-For stability on Blackwell systems, it is **highly recommended** to use two separate environments: one for the Inference Server (vLLM) and one for the Agent (RAPIDS).
-
-### 1. Create the Agent Environment
-This environment hosts the LLM. It must be kept clean to avoid compiler conflicts with RAPIDS.
+ For simplicity, it is recommended to use only one environment: for both the Inference Server (vLLM) and the Agent (RAPIDS).
 
 ```bash
-conda create -n vllm_server
-pip install vllm --extra-index-url https://download.pytorch.org/whl/cu130
-```
-
-### 2. Create the Server Environment (vLLM)
-This environment runs the Streamlit UI and RAPIDS libraries.
-
-```bash
-conda create -n rapids-25.10 -c rapidsai -c conda-forge -c nvidia  \
+conda create -n rapids-vllm -c rapidsai -c conda-forge -c nvidia  \
     rapids=25.10 python=3.11 'cuda-version=13.0'
+
+conda activate rapids-vllm
+
+pip install vllm --extra-index-url https://download.pytorch.org/whl/cu130
+
+pip install streamlit optuna
 ```
 
 ## Example Usage
 
-### Step 1: Start the vLLM Server (Terminal 1)
+### Step 1: Start the vLLM Local Server (Terminal 1)
 Open a terminal, activate the server environment, and launch the model.
 
 ```bash
-conda activate vllm_server
+conda activate rapids-vllm
 
 export TRITON_PTXAS_PATH=/usr/local/cuda/bin/ptxas
 export TORCH_CUDA_ARCH_LIST="12.1a"
@@ -85,7 +80,7 @@ vllm serve /home/your_username/.cache/huggingface/hub/models--nvidia--NVIDIA-Nem
 Open a second terminal.
 
 ```bash
-conda activate rapids-25.10
+conda activate rapids-vllm
 
 # GPU-accelerated mode
 python -m cudf.pandas -m cuml.accel -m streamlit run user_interface.py
