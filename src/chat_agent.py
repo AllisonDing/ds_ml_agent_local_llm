@@ -1,5 +1,6 @@
 # chat_agent.py - Final simplified version for beginners
 import json
+import re
 import sys
 import types
 from pathlib import Path
@@ -75,28 +76,40 @@ class ChatAgent:
             "predict": self._predict
         }
 
-        # Simple system prompt
-        self.system_message = """You are a helpful machine learning assistant. 
+    def _update_system_message(self) -> str:
+        """Generate system message with current context about uploaded files."""
+        uploaded_info = ""
+        if hasattr(self, 'uploaded_files') and self.uploaded_files:
+            uploaded_names = list(self.uploaded_files.keys())
+            uploaded_info = f"\n\n**Currently uploaded files:** {', '.join(uploaded_names)}\nYou can reference these files by name directly (e.g., load_dataset('Titanic-Dataset.csv'))."
 
-                        When users ask to work with data, use the appropriate tool:
-                        - load_dataset(path, target) - Load a CSV or Parquet file (target is optional)
-                        - set_target(target) - Set the target column
-                        - describe_data() - Show info about the loaded dataset
-                        - preview_data(rows?) - Show first few rows
-                        - train_classification() - Train classification models
-                        - train_regression() - Train regression models  
-                        - optimize_logistic(trials?) - Optimize logistic regression
-                        - optimize_svc(trials?) - Optimize support vector classifier
-                        - optimize_forest(trials?) - Optimize random forest classifier
-                        - optimize_ridge(trials?) - Optimize ridge regression
-                        - optimize_forest_regressor(trials?) - Optimize random forest regressor
-                        - optimize_svr(trials?) - Optimize support vector regressor
-                        - show_best_model(metric) - Show best model by metric
-                        - show_history(limit?) - Show recent experiments
-                        - help() - Show available commands
-                        - predict(test_data_path, output_path?) - Predict on the test dataset using the best model
+        current_dataset = ""
+        if self.df is not None:
+            current_dataset = f"\n**Current dataset loaded:** {self.current_dataset_name} ({self.df.shape[0]:,} rows × {self.df.shape[1]} columns)"
+            if self.target_column:
+                current_dataset += f"\n**Target column:** {self.target_column}"
 
-                        For general ML questions, answer helpfully without using tools."""
+        return f"""You are a helpful machine learning assistant.
+
+When users ask to work with data, use the appropriate tool:
+- load_dataset(path, target) - Load a CSV or Parquet file (target is optional). For uploaded files, just use the filename (e.g., 'Titanic-Dataset.csv')
+- set_target(target) - Set the target column
+- describe_data() - Show info about the loaded dataset
+- preview_data(rows?) - Show first few rows
+- train_classification() - Train classification models
+- train_regression() - Train regression models
+- optimize_logistic(trials?) - Optimize logistic regression
+- optimize_svc(trials?) - Optimize support vector classifier
+- optimize_forest(trials?) - Optimize random forest classifier
+- optimize_ridge(trials?) - Optimize ridge regression
+- optimize_forest_regressor(trials?) - Optimize random forest regressor
+- optimize_svr(trials?) - Optimize support vector regressor
+- show_best_model(metric) - Show best model by metric
+- show_history(limit?) - Show recent experiments
+- help() - Show available commands
+- predict(test_data_path, output_path?) - Predict on the test dataset using the best model
+
+For general ML questions, answer helpfully without using tools.{uploaded_info}{current_dataset}"""
 
     def _load_dataset(self, path: str, target: str = None) -> str:
         """Load a dataset from file."""
@@ -154,22 +167,22 @@ class ChatAgent:
         return f"Target set to: {target}"
 
     def _describe_data(self) -> str:
-        """Generate dataset description using LLM."""
+        """Generate dataset description using LLM, with fallback if LLM unavailable."""
         if self.df is None:
             return "No dataset loaded. Please load a dataset first."
-        
+
         # Gather dataset information
         rows, cols = self.df.shape
         missing_total = self.df.isnull().sum().sum()
         numeric_cols = self.df.select_dtypes(include=['number']).columns.tolist()
         categorical_cols = self.df.select_dtypes(include=['object', 'category']).columns.tolist()
-        
+
         # Target analysis
         target_info = ""
         if self.target_column and self.target_column in self.df.columns:
             target_data = self.df[self.target_column]
             unique_values = target_data.nunique()
-            
+
             if is_numeric_dtype(target_data):
                 target_info = f"Target '{self.target_column}' is numeric with {unique_values} unique values. Range: {target_data.min():.2f} to {target_data.max():.2f}. Mean: {target_data.mean():.2f}"
             else:
@@ -177,14 +190,12 @@ class ChatAgent:
                 if unique_values <= 10:
                     class_counts = target_data.value_counts()
                     target_info += f" Top classes: {dict(class_counts.head(3))}"
-        
+
         # Missing values details
         missing_info = ""
         if missing_total > 0:
             missing_cols = self.df.isnull().sum()[self.df.isnull().sum() > 0]
             missing_info = f"Missing values in {len(missing_cols)} columns: " + ", ".join([f"{col}({count})" for col, count in missing_cols.head(5).items()])
-        
-        # Replace the prompt variable in the _describe_data method with this:
 
         prompt = f"""Analyze this dataset and provide a well-formatted description:
 
@@ -201,7 +212,7 @@ class ChatAgent:
             {missing_info if missing_info else "No missing values"}
 
             Create a CONCRETE description. Focus on key insights about data quality and ML suitability.
-            
+
             CRITICAL FORMATTING RULES - MUST FOLLOW:
             1. DO NOT include ANY title or heading at the beginning
             2. DO NOT write "Dataset Analysis" or any other title
@@ -210,7 +221,7 @@ class ChatAgent:
             5. Use **bold** for section names only (like **Dataset Overview**, **Missing Values**, etc.)
             6. Use regular bullet points (•) for items
             7. Keep all text at normal size
-            
+
             Begin your response directly with **Dataset Overview** and the content. No title before that."""
 
         try:
@@ -218,31 +229,43 @@ class ChatAgent:
                 {"role": "system", "content": "You are a data analyst. Create clear, well-formatted dataset descriptions using markdown. Be concise but informative. Use proper markdown formatting with headers (##), bullet points (-), and code blocks (```)."},
                 {"role": "user", "content": prompt}
             ])
-            
+
             description = response["choices"][0]["message"]["content"]
             description = description.strip()
-        
+
             if not description.startswith('#'):
                 description = "## Dataset Analysis\n\n" + description
 
             return description
-            
+
         except Exception as e:
             # Fallback to simple description if LLM fails
-            return f"""Dataset: {rows:,} rows, {cols} columns
-                Target: {self.target_column}
-                Missing values: {missing_total:,}
-                Numeric columns: {len(numeric_cols)}
-                Categorical columns: {len(categorical_cols)}"""
+            print(f"⚠️ LLM unavailable: {str(e)}")
+            return f"""**Dataset Overview**
+
+• **Shape:** {rows:,} rows × {cols} columns
+• **Numeric Columns:** {len(numeric_cols)} columns
+• **Categorical Columns:** {len(categorical_cols)} columns
+• **Missing Values:** {missing_total:,} total
+
+**Target Column:** {self.target_column if self.target_column else "Not set"}
+
+**Numeric Columns:** {', '.join(numeric_cols[:5]) if numeric_cols else "None"}
+
+**Categorical Columns:** {', '.join(categorical_cols[:5]) if categorical_cols else "None"}
+
+{f"**Missing Data:** {missing_info}" if missing_info else "**Data Quality:** No missing values detected"}
+
+_Note: LLM analysis unavailable. Showing basic statistics._"""
 
     def _preview_data(self, rows: int = 5) -> str:
-        """Generate data preview using LLM with markdown table format."""
+        """Generate data preview using LLM with markdown table format, with fallback if LLM unavailable."""
         if self.df is None:
             return "No dataset loaded. Please load a dataset first."
-        
+
         rows = max(1, min(20, rows))
         preview_df = self.df.head(rows)
-        
+
         # Convert dataframe to markdown format
         try:
             # This requires: pip install tabulate
@@ -250,7 +273,7 @@ class ChatAgent:
         except Exception:
             # Fallback to string format
             df_markdown = preview_df.to_string(index=True, max_cols=None, max_colwidth=None)
-        
+
         # Get column info
         column_info = []
         for col in preview_df.columns:
@@ -258,7 +281,7 @@ class ChatAgent:
             non_null = preview_df[col].notna().sum()
             unique = preview_df[col].nunique()
             column_info.append(f"{col} ({dtype}, {non_null}/{rows} non-null, {unique} unique)")
-        
+
         prompt = f"""Here's a preview of the dataset with {rows} DATA rows (not including header):
 
         Data in markdown table format:
@@ -290,23 +313,26 @@ class ChatAgent:
                 {"role": "system", "content": "You are a data analyst. Present the data preview using the exact markdown table provided. Do not modify or truncate the table."},
                 {"role": "user", "content": prompt}
             ])
-            
+
             preview = response["choices"][0]["message"]["content"]
             return preview.strip()
-        
+
         except Exception as e:
             # Fallback that still uses markdown if available
-            fallback_output = f"""Dataset Preview ({rows} rows)
+            print(f"⚠️ LLM unavailable: {str(e)}")
+            fallback_output = f"""**Dataset Preview** ({rows} rows)
 
-                {df_markdown}
+{df_markdown}
 
-                **Dataset Info:**
-                - Total rows: {len(self.df):,}
-                - Total columns: {len(self.df.columns)}
-                - Columns: {', '.join(self.df.columns.tolist())}
+**Dataset Info:**
+- Total rows: {len(self.df):,}
+- Total columns: {len(self.df.columns)}
+- Columns: {', '.join(self.df.columns.tolist())}
 
-                Showing {rows} of {len(self.df):,} total rows."""
-            
+Showing {rows} of {len(self.df):,} total rows.
+
+_Note: LLM analysis unavailable. Showing table only._"""
+
             return fallback_output
 
     def _train_classification(self) -> str:
@@ -1068,20 +1094,28 @@ class ChatAgent:
         """Generate a paraphrased version of the user's question."""
         paraphrase_prompt = f"""Paraphrase the following user question in a clear, concise way that captures their intent.
         Keep it brief and direct. If it's a command for the ML system, maintain the command structure.
-        
+
         User question: "{user_message}"
-        
+
         Provide ONLY the paraphrased version, nothing else."""
-        
+
         try:
             response = self.llm_client.chat([
                 {"role": "system", "content": "You are a helpful assistant that clarifies and paraphrases questions. Be concise."},
                 {"role": "user", "content": paraphrase_prompt}
             ])
-            
+
             paraphrased = response["choices"][0]["message"]["content"].strip()
+            # Remove <think>...</think> blocks
+            paraphrased = re.sub(r'<think>.*?</think>', '', paraphrased, flags=re.DOTALL).strip()
+            # Remove any orphaned closing tags and everything after them
+            paraphrased = re.sub(r'</think>.*', '', paraphrased).strip()
+            # Remove common prefixes like "Paraphrase:" or "Paraphrased:"
+            paraphrased = re.sub(r'^(paraphrase[d]?:|paraphrased version:)\s*', '', paraphrased, flags=re.IGNORECASE).strip()
+            # Remove the original user message if it's repeated at the end
+            paraphrased = re.sub(re.escape(user_message) + r'\s*$', '', paraphrased, flags=re.IGNORECASE).strip()
             # Remove quotes if the LLM wrapped it in quotes
-            paraphrased = paraphrased.strip('"\'')
+            paraphrased = paraphrased.strip('"\'').strip()
             return paraphrased
         except Exception:
             # If paraphrasing fails, return original
@@ -1091,14 +1125,14 @@ class ChatAgent:
         """Main chat method - simplified single pass."""
         # Paraphrase the question first
         paraphrased_question = self._paraphrase_question(user_message)
-        
-        # Add system message if this is the first message
+
+        # Add system message if this is the first message (use dynamic system message)
         if not self.conversation:
-            self.conversation.append({"role": "system", "content": self.system_message})
-        
+            self.conversation.append({"role": "system", "content": self._update_system_message()})
+
         # Add user message
         self.conversation.append({"role": "user", "content": user_message})
-        
+
         try:
             # Get response from LLM
             response = self.llm_client.chat(

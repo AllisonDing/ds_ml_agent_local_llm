@@ -50,10 +50,10 @@ class LLMClient:
         """Removes <think> tags and other artifacts from the model response."""
         if not content:
             return ""
-        
+
         # Remove the internal monologue block <think>...</think>
         content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL)
-        
+
         # Cleanup extra whitespace resulting from the removal
         return content.strip()
 
@@ -78,7 +78,7 @@ class LLMClient:
                 json=payload,
                 timeout=120
             )
-            
+
             if response.status_code == 400 and "tool" in response.text.lower():
                  raise Exception(f"Tool Error: Ensure vLLM started with '--tool-call-parser llama3_json'. Response: {response.text}")
 
@@ -88,14 +88,14 @@ class LLMClient:
             # --- CLEANING STEP (CRITICAL) ---
             if "choices" in result and len(result["choices"]) > 0:
                 message = result["choices"][0]["message"]
-                
+
                 # 1. Clean the text content (remove <think> tags)
                 if message.get("content"):
                     message["content"] = self._clean_content(message["content"])
-                
+
                 # 2. Ensure tool calls are respected
                 # (Native parser handles extraction, but we leave it as is)
-            
+
             return result
 
         except Exception as e:

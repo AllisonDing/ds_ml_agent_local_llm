@@ -76,11 +76,31 @@ left_col, right_col = st.columns([3, 7])
 
 with left_col:
     st.header("🤖 ML Agent")
-    
+
+    # Show if data is already loaded
+    if st.session_state.ml_agent.df is not None:
+        st.info(f"📊 **Data Loaded:** {st.session_state.ml_agent.current_dataset_name}\n\n"
+                f"Shape: {st.session_state.ml_agent.df.shape[0]:,} rows × {st.session_state.ml_agent.df.shape[1]} columns\n\n"
+                f"Target: {st.session_state.ml_agent.target_column if st.session_state.ml_agent.target_column else 'Not set'}")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("📋 Describe Data"):
+                result = st.session_state.ml_agent._describe_data()
+                st.session_state.messages.append({"role": "assistant", "content": result})
+                st.rerun()
+        with col2:
+            if st.button("👀 Preview Data"):
+                result = st.session_state.ml_agent._preview_data()
+                st.session_state.messages.append({"role": "assistant", "content": result})
+                st.rerun()
+
+        st.divider()
+
     # Multi-file upload
     uploaded_files = st.file_uploader(
-        "Upload Datasets", 
-        type=['csv', 'parquet'], 
+        "Upload Datasets",
+        type=['csv', 'parquet'],
         accept_multiple_files=True,
         help="Upload training data, test data, or any CSV/Parquet files"
     )
@@ -88,35 +108,35 @@ with left_col:
     # Process uploaded files
     if uploaded_files:
         st.subheader("📁 Uploaded Files")
-        
+
         for uploaded_file in uploaded_files:
             file_key = uploaded_file.name
-            
+
             # Save file if not already saved
             if file_key not in st.session_state.uploaded_files:
                 # Create temp file
                 with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{uploaded_file.name.split(".")[-1]}') as tmp_file:
                     tmp_file.write(uploaded_file.getvalue())
                     tmp_path = tmp_file.name
-                
+
                 # Store file info
                 st.session_state.uploaded_files[file_key] = {
                     'path': tmp_path,
                     'name': uploaded_file.name
                 }
-                
+
                 # Load and show basic info
                 try:
                     if uploaded_file.name.endswith('.parquet'):
                         df = pd.read_parquet(tmp_path)
                     else:
                         df = pd.read_csv(tmp_path)
-                    
+
                     st.session_state.uploaded_files[file_key]['shape'] = df.shape
                     st.session_state.uploaded_files[file_key]['columns'] = list(df.columns)
                     st.session_state.ml_agent.uploaded_files = getattr(st.session_state.ml_agent, 'uploaded_files', {})
                     st.session_state.ml_agent.uploaded_files[uploaded_file.name] = tmp_path
-                
+
                 except Exception as e:
                     st.error(f"Error loading {uploaded_file.name}: {str(e)}")
                     continue
@@ -290,7 +310,7 @@ with right_col:
                 paraphrase_words = paraphrased_question.split()
                 for i in range(1, len(paraphrase_words) + 1):
                     partial_paraphrase = " ".join(paraphrase_words[:i])
-                    paraphrase_placeholder.markdown(f"**Understood as:** _{partial_paraphrase}_")
+                    paraphrase_placeholder.markdown(f"**Understood as:** {partial_paraphrase}")
                     time.sleep(0.03)  # Adjust speed for paraphrase streaming
                 
                 time.sleep(0.3)  # Brief pause to show the paraphrase
