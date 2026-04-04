@@ -38,7 +38,7 @@ Please refer to the [official RAPIDS installation documentation](https://docs.ra
 
 ## Recommendated Installation:
 
- For simplicity, it is recommended to use only one environment: for both the Inference Server (vLLM) and the Agent (RAPIDS).
+ For simplicity, it is recommended to use only one environment for both the Inference Server (vLLM) and the Agent (RAPIDS).
 
 ```bash
 conda create -n rapids-vllm -c rapidsai -c conda-forge -c nvidia  \
