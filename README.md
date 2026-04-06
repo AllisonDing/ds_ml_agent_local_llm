@@ -9,9 +9,9 @@ The Data Science ML Agent enables natural language interaction for common data s
 
 ## LLM Used
 
-[NVIDIA Nemotron Nano-9B-v2](https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2): A compact, open-source large language model optimized for reasoning and data analysis tasks.
+[NVIDIA Nemotron Cascade-2-30B-A3B](https://huggingface.co/nvidia/Nemotron-Cascade-2-30B-A3B): A compact, open-source large language model optimized for reasoning and data analysis tasks.
 
-Donwload it to your local folder using the llm_download.py script. The model will be permanently saved in .cache, for example, /home/your_username/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-Nano-9B-v2/snapshots/bce37e25324449f9be5b6a03c69a15244d27ee6e
+Donwload it to your local folder using the llm_download.py script. The model will be permanently saved in .cache, for example, /home/allisond/.cache/huggingface/hub/models--nvidia--Nemotron-Cascade-2-30B-A3B/snapshots/cfec477164d2222fbc1f8af9357f3d1e6ab40fae
 
 ## Inference Server Used
 
@@ -46,7 +46,7 @@ conda create -n rapids-vllm -c rapidsai -c conda-forge -c nvidia  \
 
 conda activate rapids-vllm
 
-pip install vllm --extra-index-url https://download.pytorch.org/whl/cu130
+pip install vllm==0.17.1 --extra-index-url https://download.pytorch.org/whl/cu130
 
 pip install streamlit optuna joblib transformers accelerate
 ```
@@ -63,17 +63,20 @@ export TRITON_PTXAS_PATH=/usr/local/cuda/bin/ptxas
 export TORCH_CUDA_ARCH_LIST="12.1a"
 export PATH=/usr/local/cuda/bin:$PATH
 export LD_LIBRARY_PATH=/home/your_username/miniconda3/envs/vllm_server/lib:$LD_LIBRARY_PATH
+export MODEL_CKPT=nvidia/Nemotron-Cascade-2-30B-A3B
 
-vllm serve /home/your_username/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-Nano-9B-v2/snapshots/bce37e25324449f9be5b6a03c69a15244d27ee6e \
-    --served-model-name nemotron-9b \
-    --dtype bfloat16 \
-    --max-model-len 8192 \
-    --gpu-memory-utilization 0.6 \
-    --max-num-seqs 32 \
+vllm serve nvidia/Nemotron-Cascade-2-30B-A3B \
     --port 8000 \
+    --tensor-parallel-size 1 \
+    --gpu-memory-utilization 0.60 \
+    --max-model-len 16384 \
+    --kv-cache-dtype fp8 \
+    --reasoning-parser nemotron_v3 \
+    --mamba-ssm-cache-dtype float32 \
     --trust-remote-code \
     --enable-auto-tool-choice \
-    --tool-call-parser llama3_json
+    --tool-call-parser qwen3_coder
+
 ```
 
 ### Step 2: Start the User Interface (Terminal 2)
@@ -81,6 +84,10 @@ Open a second terminal.
 
 ```bash
 conda activate rapids-vllm
+
+# cuDF memory allocation
+export RMM_ALLOCATOR=managed
+export CUDF_PANDAS_LIMIT_MEMORY=25000000000
 
 # GPU-accelerated mode
 python -m cudf.pandas -m cuml.accel -m streamlit run user_interface.py
