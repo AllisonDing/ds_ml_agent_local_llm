@@ -28,7 +28,7 @@ class LLMClient:
         self.base_url = VLLM_BASE_URL.rstrip("/")
         self.session = create_session()
         self.temperature = 0.0
-        self.max_tokens = 4096
+        self.max_tokens = 1024
         self.model = self._auto_detect_model()
 
     def _auto_detect_model(self) -> str:
