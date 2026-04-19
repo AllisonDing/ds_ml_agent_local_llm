@@ -77,39 +77,214 @@ class ChatAgent:
         }
 
     def _update_system_message(self) -> str:
-        """Generate system message with current context about uploaded files."""
+        """Generate system message with explicit XML tool definitions (Nemotron chat template format)."""
         uploaded_info = ""
         if hasattr(self, 'uploaded_files') and self.uploaded_files:
             uploaded_names = list(self.uploaded_files.keys())
-            uploaded_info = f"\n\n**Currently uploaded files:** {', '.join(uploaded_names)}\nYou can reference these files by name directly (e.g., load_dataset('Titanic-Dataset.csv'))."
+            uploaded_info = f"\n\nCurrently uploaded files: {', '.join(uploaded_names)}\nYou can reference these files by name directly (e.g., load_dataset('Titanic-Dataset.csv'))."
 
         current_dataset = ""
         if self.df is not None:
-            current_dataset = f"\n**Current dataset loaded:** {self.current_dataset_name} ({self.df.shape[0]:,} rows × {self.df.shape[1]} columns)"
+            current_dataset = f"\nCurrent dataset loaded: {self.current_dataset_name} ({self.df.shape[0]:,} rows x {self.df.shape[1]} columns)"
             if self.target_column:
-                current_dataset += f"\n**Target column:** {self.target_column}"
+                current_dataset += f"\nTarget column: {self.target_column}"
 
-        return f"""You are a helpful machine learning assistant.
+        return f"""You are a helpful machine learning assistant. Help users load datasets, train models, and analyze results.
 
-When users ask to work with data, use the appropriate tool:
-- load_dataset(path, target) - Load a CSV or Parquet file (target is optional). For uploaded files, just use the filename (e.g., 'Titanic-Dataset.csv')
-- set_target(target) - Set the target column
-- describe_data() - Show info about the loaded dataset
-- preview_data(rows?) - Show first few rows
-- train_classification() - Train classification models
-- train_regression() - Train regression models
-- optimize_logistic(trials?) - Optimize logistic regression
-- optimize_svc(trials?) - Optimize support vector classifier
-- optimize_forest(trials?) - Optimize random forest classifier
-- optimize_ridge(trials?) - Optimize ridge regression
-- optimize_forest_regressor(trials?) - Optimize random forest regressor
-- optimize_svr(trials?) - Optimize support vector regressor
-- show_best_model(metric) - Show best model by metric
-- show_history(limit?) - Show recent experiments
-- help() - Show available commands
-- predict(test_data_path, output_path?) - Predict on the test dataset using the best model
+For general ML questions answer directly. When the user asks to perform a data or ML operation, call the appropriate tool.
 
-For general ML questions, answer helpfully without using tools.{uploaded_info}{current_dataset}"""
+# Tools
+
+You have access to the following functions:
+
+<tools>
+<function>
+<name>load_dataset</name>
+<description>Load a CSV or Parquet dataset. Target column is optional - can be set later with set_target. For uploaded files, use the filename directly (e.g., 'Titanic-Dataset.csv').</description>
+<parameters>
+<parameter>
+<name>path</name>
+<type>string</type>
+<description>Path or filename of the data file to load</description>
+</parameter>
+<parameter>
+<name>target</name>
+<type>string</type>
+<description>Target column name for prediction (optional - can be set later)</description>
+</parameter>
+</parameters>
+<required>["path"]</required>
+</function>
+<function>
+<name>set_target</name>
+<description>Set the target column for prediction on the currently loaded dataset</description>
+<parameters>
+<parameter>
+<name>target</name>
+<type>string</type>
+<description>Name of the column to use as the prediction target</description>
+</parameter>
+</parameters>
+<required>["target"]</required>
+</function>
+<function>
+<name>describe_data</name>
+<description>Show descriptive statistics and information about the currently loaded dataset</description>
+<parameters>
+</parameters>
+</function>
+<function>
+<name>preview_data</name>
+<description>Show the first few rows of the currently loaded dataset</description>
+<parameters>
+<parameter>
+<name>rows</name>
+<type>integer</type>
+<description>Number of rows to preview (default: 5)</description>
+</parameter>
+</parameters>
+</function>
+<function>
+<name>train_classification</name>
+<description>Train Logistic Regression, Random Forest, and Linear SVC classification models on the loaded dataset and return accuracy and F1 scores</description>
+<parameters>
+</parameters>
+</function>
+<function>
+<name>train_regression</name>
+<description>Train Ridge Regression, Random Forest Regressor, and Linear SVR regression models on the loaded dataset and return R2, RMSE, and MAE scores</description>
+<parameters>
+</parameters>
+</function>
+<function>
+<name>optimize_logistic</name>
+<description>Use Optuna to hyperparameter-optimize Logistic Regression (tunes C and max_iter) via 3-fold cross-validation</description>
+<parameters>
+<parameter>
+<name>trials</name>
+<type>integer</type>
+<description>Number of Optuna optimization trials (default: 20)</description>
+</parameter>
+</parameters>
+</function>
+<function>
+<name>optimize_svc</name>
+<description>Use Optuna to hyperparameter-optimize a Support Vector Classifier (tunes C, penalty, loss, max_iter) via 3-fold cross-validation</description>
+<parameters>
+<parameter>
+<name>trials</name>
+<type>integer</type>
+<description>Number of Optuna optimization trials (default: 20)</description>
+</parameter>
+</parameters>
+</function>
+<function>
+<name>optimize_forest</name>
+<description>Use Optuna to hyperparameter-optimize a Random Forest Classifier (tunes n_estimators and max_depth) via 3-fold cross-validation</description>
+<parameters>
+<parameter>
+<name>trials</name>
+<type>integer</type>
+<description>Number of Optuna optimization trials (default: 20)</description>
+</parameter>
+</parameters>
+</function>
+<function>
+<name>optimize_ridge</name>
+<description>Use Optuna to hyperparameter-optimize Ridge Regression (tunes alpha) via 3-fold cross-validation</description>
+<parameters>
+<parameter>
+<name>trials</name>
+<type>integer</type>
+<description>Number of Optuna optimization trials (default: 20)</description>
+</parameter>
+</parameters>
+</function>
+<function>
+<name>optimize_forest_regressor</name>
+<description>Use Optuna to hyperparameter-optimize a Random Forest Regressor (tunes n_estimators, max_depth, min_samples_leaf) via 3-fold cross-validation</description>
+<parameters>
+<parameter>
+<name>trials</name>
+<type>integer</type>
+<description>Number of Optuna optimization trials (default: 20)</description>
+</parameter>
+</parameters>
+</function>
+<function>
+<name>optimize_svr</name>
+<description>Use Optuna to hyperparameter-optimize a Support Vector Regressor (tunes C and epsilon) via 3-fold cross-validation</description>
+<parameters>
+<parameter>
+<name>trials</name>
+<type>integer</type>
+<description>Number of Optuna optimization trials (default: 20)</description>
+</parameter>
+</parameters>
+</function>
+<function>
+<name>show_best_model</name>
+<description>Show the best experiment from history ranked by a given metric</description>
+<parameters>
+<parameter>
+<name>metric</name>
+<type>string</type>
+<description>Metric name to rank by, e.g. accuracy, f1_weighted, r2, rmse (default: accuracy)</description>
+</parameter>
+</parameters>
+</function>
+<function>
+<name>show_history</name>
+<description>Show the most recent experiments from the experiment history log</description>
+<parameters>
+<parameter>
+<name>limit</name>
+<type>integer</type>
+<description>Number of recent experiments to show (default: 5)</description>
+</parameter>
+</parameters>
+</function>
+<function>
+<name>help</name>
+<description>Show all available commands and usage examples</description>
+<parameters>
+</parameters>
+</function>
+<function>
+<name>predict</name>
+<description>Run inference on a test dataset using the best saved model and write predictions to a CSV file</description>
+<parameters>
+<parameter>
+<name>test_data_path</name>
+<type>string</type>
+<description>Path or filename of the test data file</description>
+</parameter>
+<parameter>
+<name>output_path</name>
+<type>string</type>
+<description>Path to save the predictions CSV (default: predictions.csv)</description>
+</parameter>
+</parameters>
+<required>["test_data_path"]</required>
+</function>
+</tools>
+
+If you choose to call a function ONLY reply in the following format with NO suffix:
+
+<tool_call>
+<function=example_function_name>
+<parameter=example_parameter_1>value_1</parameter>
+<parameter=example_parameter_2>value_2</parameter>
+</function>
+</tool_call>
+
+<IMPORTANT>
+Reminder:
+- Function calls MUST follow the specified format, with the inner <function=...></function> block nested inside <tool_call></tool_call> tags
+- Required parameters MUST be specified
+- You may provide optional reasoning BEFORE the function call, but NOT after
+- If no tool is needed, answer the question normally without mentioning function calls
+</IMPORTANT>{uploaded_info}{current_dataset}"""
 
     def _load_dataset(self, path: str, target: str = None) -> str:
         """Load a dataset from file."""
@@ -167,96 +342,45 @@ For general ML questions, answer helpfully without using tools.{uploaded_info}{c
         return f"Target set to: {target}"
 
     def _describe_data(self) -> str:
-        """Generate dataset description using LLM, with fallback if LLM unavailable."""
+        """Return dataset statistics directly without a secondary LLM call."""
         if self.df is None:
             return "No dataset loaded. Please load a dataset first."
 
-        # Gather dataset information
         rows, cols = self.df.shape
         missing_total = self.df.isnull().sum().sum()
         numeric_cols = self.df.select_dtypes(include=['number']).columns.tolist()
         categorical_cols = self.df.select_dtypes(include=['object', 'category']).columns.tolist()
 
-        # Target analysis
-        target_info = ""
+        target_info = "Not set"
         if self.target_column and self.target_column in self.df.columns:
             target_data = self.df[self.target_column]
             unique_values = target_data.nunique()
-
             if is_numeric_dtype(target_data):
-                target_info = f"Target '{self.target_column}' is numeric with {unique_values} unique values. Range: {target_data.min():.2f} to {target_data.max():.2f}. Mean: {target_data.mean():.2f}"
+                target_info = (
+                    f"{self.target_column} — numeric, {unique_values} unique values, "
+                    f"range {target_data.min():.2f}–{target_data.max():.2f}, mean {target_data.mean():.2f}"
+                )
             else:
-                target_info = f"Target '{self.target_column}' is categorical with {unique_values} unique values."
+                target_info = f"{self.target_column} — categorical, {unique_values} unique values"
                 if unique_values <= 10:
-                    class_counts = target_data.value_counts()
-                    target_info += f" Top classes: {dict(class_counts.head(3))}"
+                    counts = target_data.value_counts()
+                    target_info += f", top classes: {dict(counts.head(3))}"
 
-        # Missing values details
-        missing_info = ""
+        missing_info = "No missing values"
         if missing_total > 0:
             missing_cols = self.df.isnull().sum()[self.df.isnull().sum() > 0]
-            missing_info = f"Missing values in {len(missing_cols)} columns: " + ", ".join([f"{col}({count})" for col, count in missing_cols.head(5).items()])
+            missing_info = ", ".join(f"{col} ({count})" for col, count in missing_cols.items())
 
-        prompt = f"""Analyze this dataset and provide a well-formatted description:
-
-            Dataset basics:
-            - Shape: {rows:,} rows × {cols} columns
-            - Numeric columns: {len(numeric_cols)}
-            - Categorical columns: {len(categorical_cols)}
-            - Total missing values: {missing_total:,}
-
-            Target information:
-            {target_info if target_info else "No target column set"}
-
-            Missing values:
-            {missing_info if missing_info else "No missing values"}
-
-            Create a CONCRETE description. Focus on key insights about data quality and ML suitability.
-
-            CRITICAL FORMATTING RULES - MUST FOLLOW:
-            1. DO NOT include ANY title or heading at the beginning
-            2. DO NOT write "Dataset Analysis" or any other title
-            3. Start IMMEDIATELY with "**Dataset Overview**" as the first line
-            4. NO markdown headers (#, ##, ###) anywhere
-            5. Use **bold** for section names only (like **Dataset Overview**, **Missing Values**, etc.)
-            6. Use regular bullet points (•) for items
-            7. Keep all text at normal size
-
-            Begin your response directly with **Dataset Overview** and the content. No title before that."""
-
-        try:
-            response = self.llm_client.chat([
-                {"role": "system", "content": "You are a data analyst. Create clear, well-formatted dataset descriptions using markdown. Be concise but informative. Use proper markdown formatting with headers (##), bullet points (-), and code blocks (```)."},
-                {"role": "user", "content": prompt}
-            ])
-
-            description = response["choices"][0]["message"]["content"]
-            description = description.strip()
-
-            if not description.startswith('#'):
-                description = "## Dataset Analysis\n\n" + description
-
-            return description
-
-        except Exception as e:
-            # Fallback to simple description if LLM fails
-            print(f"⚠️ LLM unavailable: {str(e)}")
-            return f"""**Dataset Overview**
+        return f"""**Dataset Overview**
 
 • **Shape:** {rows:,} rows × {cols} columns
-• **Numeric Columns:** {len(numeric_cols)} columns
-• **Categorical Columns:** {len(categorical_cols)} columns
+• **Numeric Columns ({len(numeric_cols)}):** {', '.join(numeric_cols) if numeric_cols else "None"}
+• **Categorical Columns ({len(categorical_cols)}):** {', '.join(categorical_cols) if categorical_cols else "None"}
 • **Missing Values:** {missing_total:,} total
 
-**Target Column:** {self.target_column if self.target_column else "Not set"}
+**Target Column:** {target_info}
 
-**Numeric Columns:** {', '.join(numeric_cols[:5]) if numeric_cols else "None"}
-
-**Categorical Columns:** {', '.join(categorical_cols[:5]) if categorical_cols else "None"}
-
-{f"**Missing Data:** {missing_info}" if missing_info else "**Data Quality:** No missing values detected"}
-
-_Note: LLM analysis unavailable. Showing basic statistics._"""
+**Missing Data:** {missing_info}"""
 
     def _preview_data(self, rows: int = 5) -> str:
         """Generate data preview using LLM with markdown table format, with fallback if LLM unavailable."""
@@ -1081,12 +1205,24 @@ _Note: LLM analysis unavailable. Showing table only._"""
         ]
 
     def _call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> str:
-        """Call a tool function."""
+        """Call a tool function, coercing string arguments to the annotated types."""
+        import inspect
         if tool_name not in self.tools:
             return f"Unknown tool: {tool_name}"
-        
+
+        fn = self.tools[tool_name]
+        hints = {k: v for k, v in (fn.__annotations__ or {}).items() if k != "return"}
+        coerced = {}
+        for k, v in arguments.items():
+            if k in hints and isinstance(v, str):
+                try:
+                    v = hints[k](v)
+                except (ValueError, TypeError):
+                    pass
+            coerced[k] = v
+
         try:
-            return self.tools[tool_name](**arguments)
+            return fn(**coerced)
         except Exception as e:
             return f"Error in {tool_name}: {str(e)}"
         
@@ -1121,53 +1257,54 @@ _Note: LLM analysis unavailable. Showing table only._"""
             # If paraphrasing fails, return original
             return user_message
     
+    def _trim_conversation(self, max_pairs: int = 6):
+        """Keep system message + last max_pairs of user/assistant turns to avoid context overflow."""
+        if not self.conversation:
+            return
+        system = [m for m in self.conversation if m["role"] == "system"]
+        turns = [m for m in self.conversation if m["role"] != "system"]
+        # Keep only the last max_pairs * 2 non-system messages
+        self.conversation = system + turns[-(max_pairs * 2):]
+
     def chat(self, user_message: str) -> str:
-        """Main chat method - simplified single pass."""
-        # Paraphrase the question first
+        """Main chat method - tools are embedded in the system prompt (Nemotron agentic format)."""
         paraphrased_question = self._paraphrase_question(user_message)
 
-        # Add system message if this is the first message (use dynamic system message)
         if not self.conversation:
             self.conversation.append({"role": "system", "content": self._update_system_message()})
 
-        # Add user message
+        self._trim_conversation()
         self.conversation.append({"role": "user", "content": user_message})
 
         try:
-            # Get response from LLM
-            response = self.llm_client.chat(
-                messages=self.conversation,
-                tools=self._get_tool_specs()
-            )
-             
-            # Extract the message
+            response = self.llm_client.chat(messages=self.conversation)
             message = response["choices"][0]["message"]
-            
-            # Check if LLM wants to use a tool
+
             if message.get("tool_calls"):
                 tool_call = message["tool_calls"][0]
                 tool_name = tool_call["function"]["name"]
-                
+
                 try:
                     arguments = json.loads(tool_call["function"]["arguments"])
-                except json.JSONDecodeError:
+                except (json.JSONDecodeError, TypeError):
                     arguments = {}
-                
-                # Call the tool
+
                 result = self._call_tool(tool_name, arguments)
-                
-                # Add to conversation
+
+                # Store as a single assistant turn so the conversation stays alternating
+                # (user → assistant) and the next user message is always valid.
                 self.conversation.append({"role": "assistant", "content": result})
-                
+
                 return paraphrased_question, result
-            
-            # Regular text response
+
             else:
                 content = message.get("content", "I'm not sure how to help with that.")
                 self.conversation.append({"role": "assistant", "content": content})
                 return paraphrased_question, content
-                
+
         except Exception as e:
-            error_msg = f"Sorry, I encountered an error: {str(e)}"
-            self.conversation.append({"role": "assistant", "content": error_msg})
-            return paraphrased_question, error_msg
+            # Pop the user message we just added so the conversation stays valid
+            if self.conversation and self.conversation[-1]["role"] == "user":
+                self.conversation.pop()
+            fallback = "I wasn't able to process that request. Please try rephrasing or ask something else."
+            return paraphrased_question, fallback

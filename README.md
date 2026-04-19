@@ -11,8 +11,6 @@ The Data Science ML Agent enables natural language interaction for common data s
 
 [NVIDIA Nemotron Cascade-2-30B-A3B](https://huggingface.co/nvidia/Nemotron-Cascade-2-30B-A3B): A compact, open-source large language model optimized for reasoning and data analysis tasks.
 
-Donwload it to your local folder using the llm_download.py script. The model will be permanently saved in .cache, for example, /home/allisond/.cache/huggingface/hub/models--nvidia--Nemotron-Cascade-2-30B-A3B/snapshots/cfec477164d2222fbc1f8af9357f3d1e6ab40fae
-
 ## Inference Server Used
 
 vLLM (Versatile Large Language Model) is a high-performance, open-source library designed for the fast inference and serving of Large Language Models (LLMs).
@@ -38,7 +36,7 @@ Please refer to the [official RAPIDS installation documentation](https://docs.ra
 
 ## Recommendated Installation:
 
- For simplicity, it is recommended to use only one environment for both the Inference Server (vLLM) and the Agent (RAPIDS).
+ For simplicity, it is recommended to use only one environment for both the Inference Server (vLLM) and the Agent (RAPIDS). The example below uses the following compatible versions (important for a successful setup): RAPIDS 25.02, Python 3.11, CUDA 13.0, and vLLM 0.17.1.
 
 ```bash
 conda create -n rapids-vllm -c rapidsai -c conda-forge -c nvidia  \
@@ -49,6 +47,8 @@ conda activate rapids-vllm
 pip install vllm==0.17.1 --extra-index-url https://download.pytorch.org/whl/cu130
 
 pip install streamlit optuna joblib transformers accelerate
+
+conda install -c nvidia cuda-cudart=12 cuda-runtime=12
 ```
 
 ## Example Usage
@@ -62,7 +62,7 @@ conda activate rapids-vllm
 export TRITON_PTXAS_PATH=/usr/local/cuda/bin/ptxas
 export TORCH_CUDA_ARCH_LIST="12.1a"
 export PATH=/usr/local/cuda/bin:$PATH
-export LD_LIBRARY_PATH=/home/your_username/miniconda3/envs/vllm_server/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 export MODEL_CKPT=nvidia/Nemotron-Cascade-2-30B-A3B
 
 vllm serve nvidia/Nemotron-Cascade-2-30B-A3B \
