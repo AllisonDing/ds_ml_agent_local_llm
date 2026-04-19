@@ -47,8 +47,6 @@ conda activate rapids-vllm
 pip install vllm==0.17.1 --extra-index-url https://download.pytorch.org/whl/cu130
 
 pip install streamlit optuna joblib transformers accelerate
-
-conda install -c nvidia cuda-cudart=12 cuda-runtime=12
 ```
 
 ## Example Usage
